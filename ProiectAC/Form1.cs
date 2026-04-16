@@ -22,5 +22,29 @@ namespace ProiectAC
         {
 
         }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            // Apelează parser-ul scris de tine
+            var microprogram = ProiectAC.Utilities.CsvParser.Load("microprogram.csv");
+
+            if (microprogram.Count > 0)
+            {
+                // Luăm prima instrucțiune ca să verificăm că a citit corect datele
+                var prima = microprogram[0];
+
+                MessageBox.Show($"SUCCES! Am încărcat {microprogram.Count} instrucțiuni.\n\n" +
+                                $"Test prima instrucțiune:\n" +
+                                $"- Etichetă: {prima.Label}\n" +
+                                $"- Adresă: {prima.Address}\n" +
+                                $"- Operație ALU: {prima.AluOp}\n" +
+                                $"- Adresă de Salt: {prima.JumpAddressText}",
+                                "Test Reușit");
+            }
+            else
+            {
+                MessageBox.Show("Nu s-a încărcat nimic. Ceva nu e în regulă cu fișierul CSV.", "Eroare");
+            }
+        }
     }
 }

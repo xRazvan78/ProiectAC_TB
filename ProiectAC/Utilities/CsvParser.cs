@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
-using ProiectAC.Models; // Aici importăm clasa Microinstruction
+using ProiectAC.Models;
 
 namespace ProiectAC.Utilities
 {
@@ -26,7 +26,6 @@ namespace ProiectAC.Utilities
                 {
                     if (string.IsNullOrWhiteSpace(line)) continue;
 
-                    // Folosim separatorul punct și virgulă conform fișierului tău
                     string[] columns = line.Split(';');
 
                     if (columns.Length >= 10)
@@ -35,34 +34,30 @@ namespace ProiectAC.Utilities
                         {
                             Microinstruction mi = new Microinstruction();
 
-                            // 1. Eticheta (ex: IFCH)
+                            // Folosim variabilele adăugate pentru tine
                             mi.Label = columns[0].Replace(":", "").Trim();
 
-                            // 2. Adresa Hexa (ex: 0x0)
                             string hexAddress = columns[2].Replace("0x", "").Trim();
                             if (!string.IsNullOrEmpty(hexAddress))
                             {
                                 mi.Address = Convert.ToInt32(hexAddress, 16);
                             }
 
-                            // 3. Extragem doar textul operațiilor (înainte de ":")
+                            // Folosim numele scurte preferate de colegul tău
                             mi.SbusSource = ExtractText(columns[4]);
                             mi.DbusSource = ExtractText(columns[5]);
-                            mi.AluOperation = ExtractText(columns[6]);
-                            mi.RbusDestination = ExtractText(columns[7]);
-                            mi.MemoryOperation = ExtractText(columns[8]);
-                            mi.OtherOperations = ExtractText(columns[9]);
+                            mi.AluOp = ExtractText(columns[6]);
+                            mi.RbusDest = ExtractText(columns[7]);
+                            mi.MemOp = ExtractText(columns[8]);
+                            mi.OtherOps = ExtractText(columns[9]);
                             mi.Successor = ExtractText(columns[10]);
-                            mi.IndexSelection = ExtractText(columns[11]);
+                            mi.IndexSelect = ExtractText(columns[11]);
 
-                            // 4. Condiția True/False (T sau F)
                             string tf = ExtractText(columns[12]);
                             mi.TrueFalse = (tf == "T");
 
-                            // 5. Adresa de salt (text)
                             mi.JumpAddressText = ExtractText(columns[13]);
 
-                            // 6. Codul binar lung (cel de 36 biți)
                             for (int i = columns.Length - 1; i >= 0; i--)
                             {
                                 if (columns[i].Length == 36 && IsBinary(columns[i]))
@@ -74,7 +69,7 @@ namespace ProiectAC.Utilities
 
                             instructions.Add(mi);
                         }
-                        catch { /* Ignorăm liniile care nu pot fi parsate */ }
+                        catch { /* Ignorăm erorile pe linii individuale */ }
                     }
                 }
             }
