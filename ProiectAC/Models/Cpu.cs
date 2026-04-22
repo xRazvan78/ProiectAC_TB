@@ -1,9 +1,10 @@
-﻿using System;
+﻿using ProiectAC.Compiler;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Diagnostics;
 
 namespace ProiectAC.Models
 {
@@ -97,6 +98,19 @@ namespace ProiectAC.Models
             // Reset flags and memory
             Flags.Reset();
             Ram.Clear();
+        }
+
+        public void LoadSingleInstruction(string instructionText)
+        {
+            Reset();
+
+            Assembler asm = new Assembler();
+            ushort machineCode = asm.AssembleLine(instructionText);
+
+            Ram.Write(0, machineCode);
+
+            PC.Value = 0;
+            CurrentMicroAddress = 0;
         }
 
         public void ExecuteClockCycle()
