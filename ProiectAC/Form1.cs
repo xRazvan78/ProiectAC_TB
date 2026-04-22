@@ -1,4 +1,5 @@
-﻿using ProiectAC.Models;
+﻿using ProiectAC.Compiler;
+using ProiectAC.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -23,57 +24,48 @@ namespace ProiectAC
             Cpu simulatorCpu = new Cpu();
             simulatorCpu.Reset();
 
-            // 2. Simulăm o stare inițială
-            // Punem manual valorile 10 și 25 în registrele generale R1 și R2
             simulatorCpu.R[1].Value = 10;
             simulatorCpu.R[2].Value = 25;
 
-            // 3. Păcălim Instruction Register-ul (IR)
-            // Vom simula că am extras din RAM instrucțiunea "ADD R1, R2"
-            // Conform măștilor noastre: Biții 9-6 indică Sursa (R1), iar 3-0 indică Destinația (R2).
-            // Binar: 0000 0000 0100 0010 => Hexazecimal: 0x0042
             simulatorCpu.IR.Value = 0x0042;
 
-            // 4. Inserăm un microprogram "fals" la adresa 0 în MPM pentru a testa handlerele
             simulatorCpu.MPM[0] = new Microinstruction
             {
                 Address = 0,
-                SbusSource = "PDRGS",  // Ar trebui să citească R1 pe SBUS (valoarea 10)
-                DbusSource = "PDRGD",  // Ar trebui să citească R2 pe DBUS (valoarea 25)
-                AluOp = "SUM",         // ALU trebuie să le adune
-                RbusDest = "PMRG",     // Rezultatul de pe RBUS trebuie să ajungă în Destinație (R2)
+                SbusSource = "PDRGS",
+                DbusSource = "PDRGD",
+                AluOp = "SUM",  
+                RbusDest = "PMRG",
                 MemOp = "NONE",
                 OtherOps = "NONE",
-                Successor = "STEP"     // Următorul pas (nu contează aici)
+                Successor = "STEP" 
             };
 
-            // 5. TESTUL SUPREM: Executăm un ciclu de ceas (Un "Tick")
             simulatorCpu.CurrentMicroAddress = 0;
             simulatorCpu.ExecuteClockCycle();
 
             simulatorCpu.PrintCpuState();
 
-            // 6. Verificăm dacă hardware-ul și-a făcut treaba
-            if (simulatorCpu.R[2].Value == 35)
-            {
-                MessageBox.Show("SUCCES TOTAL! Procesorul tău a decodificat instrucțiunea, a extras registrele, a adunat 10 cu 25 și a salvat 35 în R2. Inima hardware funcționează perfect!",
-                                "Test Procesor", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show($"Ceva a mers greșit. Valoarea în R2 este: {simulatorCpu.R[2].Value}",
-                                "Eroare", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            Assembler asm = new Assembler();
+
+
+            ushort cod1 = asm.AssembleLine("ADD R1, R2");
+            ushort cod2 = asm.AssembleLine("MOV R10, R15");
+
+            System.Diagnostics.Debug.WriteLine($"ADD R1, R2 -> 0x{cod1:X4}");
+            System.Diagnostics.Debug.WriteLine($"MOV R10, R15 -> 0x{cod2:X4}");
+            System.Diagnostics.Debug.WriteLine($"INC R5 -> 0x{asm.AssembleLine("INC R5"):X4}");
+            System.Diagnostics.Debug.WriteLine($"BEQ 10 -> 0x{asm.AssembleLine("BEQ 10"):X4}");
+            System.Diagnostics.Debug.WriteLine($"HALT -> 0x{asm.AssembleLine("HALT"):X4}");
+
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            // Apelează parser-ul scris de tine
             var microprogram = ProiectAC.Utilities.CsvParser.Load("microprogram.csv");
 
             if (microprogram.Count > 0)
             {
-                // Luăm prima instrucțiune ca să verificăm că a citit corect datele
                 var prima = microprogram[0];
 
                 MessageBox.Show($"SUCCES! Am încărcat {microprogram.Count} instrucțiuni.\n\n" +

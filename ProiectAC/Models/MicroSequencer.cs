@@ -52,7 +52,7 @@ namespace ProiectAC.Models
                 case 0x6: return 36; // XOR
 
                 case 0x8:
-                    int subOpcodeB = irValue & 0x000F;
+                    int subOpcodeB = (irValue >> 6) & 0x000F; ;
                     switch (subOpcodeB)
                     {
                         case 0x0: return 37; // CLR
