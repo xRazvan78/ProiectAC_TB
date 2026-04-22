@@ -1,4 +1,5 @@
-﻿using ProiectAC.Models;
+﻿using ProiectAC.Compiler;
+using ProiectAC.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -44,6 +45,18 @@ namespace ProiectAC
             simulatorCpu.ExecuteClockCycle();
 
             simulatorCpu.PrintCpuState();
+
+            Assembler asm = new Assembler();
+
+
+            ushort cod1 = asm.AssembleLine("ADD R1, R2");
+            ushort cod2 = asm.AssembleLine("MOV R10, R15");
+
+            System.Diagnostics.Debug.WriteLine($"ADD R1, R2 -> 0x{cod1:X4}");
+            System.Diagnostics.Debug.WriteLine($"MOV R10, R15 -> 0x{cod2:X4}");
+            System.Diagnostics.Debug.WriteLine($"INC R5 -> 0x{asm.AssembleLine("INC R5"):X4}");
+            System.Diagnostics.Debug.WriteLine($"BEQ 10 -> 0x{asm.AssembleLine("BEQ 10"):X4}");
+            System.Diagnostics.Debug.WriteLine($"HALT -> 0x{asm.AssembleLine("HALT"):X4}");
 
         }
 
