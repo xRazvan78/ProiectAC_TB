@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace ProiectAC.Models
 {
@@ -110,31 +111,65 @@ namespace ProiectAC.Models
             SetRegisterValueByCode(mir.RbusDest, RBUS.Value);
             HandleMemoryOperation(mir.MemOp);
 
+            HandleOtherOperations(mir.OtherOps);
+
             CurrentMicroAddress = Seq.GetNextAddress(mir, Flags, IR.Value);
         }
 
         private ushort GetRegisterValueByCode(string code)
         {
-            if (string.IsNullOrEmpty(code) || code.Contains("NONE")) return 0;
+            if (string.IsNullOrEmpty(code) || code.Contains("NONE") || code == "0000") return 0;
 
             string cleanCode = code.Split(':')[0].Trim().ToUpper();
 
             switch (cleanCode)
             {
                 case "PDPC":
-                case "PDPCS": return PC.Value;
+                case "PDPCS":
+                case "PDPCD": return PC.Value;
+
                 case "PDSP":
                 case "PDSPS": return SP.Value;
+
                 case "PDMDR":
-                case "PDMDRS": return MDR.Value;
+                case "PDMDRS":
+                case "PDMDRD": return MDR.Value;
+
                 case "PDIVR":
                 case "PDIVRS": return IVR.Value;
+
                 case "PDT":
                 case "PDTS": return T.Value;
+
+                case "PDADRS": return ADR.Value;
+
                 case "PDIR": return IR.Value;
+
                 case "PDRGS":
-                    int regIndex = (IR.Value >> 8) & 0xF;
-                    return R[regIndex].Value;
+                    return R[GetSourceRegisterIndexFromIR()].Value;
+                case "PDRGD":
+                    return R[GetDestinationRegisterIndexFromIR()].Value;
+
+                case "PDFLAGS":
+                    ushort flagsValue = 0;
+                    if (Flags.Z) flagsValue |= 0x0001;
+                    if (Flags.N) flagsValue |= 0x0002;
+                    if (Flags.C) flagsValue |= 0x0004;
+                    if (Flags.V) flagsValue |= 0x0008;
+                    return flagsValue;
+
+                case "PD0S":
+                case "PD0D": return 0;
+                case "PD-1S": return 0xFFFF;
+
+                case "PDTSNEG": return (ushort)~T.Value;
+                case "PDMDRDNEG": return (ushort)~MDR.Value;
+
+                case "PDIR [7…0]D":
+                    return (ushort)(IR.Value & 0x00FF);
+
+                case "DBUS":
+                    return DBUS.Value;
 
                 default: return 0;
             }
@@ -142,7 +177,7 @@ namespace ProiectAC.Models
 
         private void SetRegisterValueByCode(string code, ushort value)
         {
-            if (string.IsNullOrEmpty(code) || code.Contains("NONE")) return;
+            if (string.IsNullOrEmpty(code) || code.Contains("NONE") || code == "00") return;
 
             string cleanCode = code.Split(':')[0].Trim().ToUpper();
 
@@ -156,11 +191,15 @@ namespace ProiectAC.Models
                 case "PMT": T.Value = value; break;
 
                 case "PMRG":
-                    int regIndex = (IR.Value >> 4) & 0xF;
+                    int regIndex = GetDestinationRegisterIndexFromIR();
                     R[regIndex].Value = value;
                     break;
 
                 case "PMFLAG":
+                    Flags.Z = (value & 0x0001) != 0;
+                    Flags.N = (value & 0x0002) != 0;
+                    Flags.C = (value & 0x0004) != 0;
+                    Flags.V = (value & 0x0008) != 0;
                     break;
             }
         }
@@ -185,6 +224,64 @@ namespace ProiectAC.Models
                     IR.Value = Ram.Read(PC.Value);
                     break;
             }
+        }
+
+        private void HandleOtherOperations(string op)
+        {
+            if (string.IsNullOrEmpty(op) || op.Contains("NONE")) return;
+
+            string cleanOp = op.Split(':')[0].Trim().ToUpper();
+
+            switch (cleanOp)
+            {
+                case "+2PC": PC.Value += 2; break;
+                case "+2SP": SP.Value += 2; break;
+                case "-2SP": SP.Value -= 2; break;
+            }
+        }
+
+        private int GetSourceRegisterIndexFromIR()
+        {
+            return (IR.Value >> 6) & 0x000F;
+        }
+
+        private int GetDestinationRegisterIndexFromIR() 
+        { 
+            return IR.Value & 0x000F;
+        }
+
+        public void PrintCpuState()
+        {
+            Debug.WriteLine("\n========== STARE CURENTĂ PROCESOR ==========");
+
+            Debug.WriteLine("--- Registre Generale ---");
+            for (int i = 0; i < 16; i++)
+            {
+                // Afișăm în format Zecimal, dar și Hexazecimal (X4 înseamnă 4 caractere hex, ex: 00FF)
+                Debug.WriteLine($"R{i,-2}: {R[i].Value,5} (0x{R[i].Value:X4})");
+            }
+
+            Debug.WriteLine("\n--- Registre Speciale ---");
+            Debug.WriteLine($"PC : {PC.Value,5} (0x{PC.Value:X4})");
+            Debug.WriteLine($"SP : {SP.Value,5} (0x{SP.Value:X4})");
+            Debug.WriteLine($"IR : {IR.Value,5} (0x{IR.Value:X4})");
+            Debug.WriteLine($"ADR: {ADR.Value,5} (0x{ADR.Value:X4})");
+            Debug.WriteLine($"MDR: {MDR.Value,5} (0x{MDR.Value:X4})");
+            Debug.WriteLine($"T  : {T.Value,5} (0x{T.Value:X4})");
+            Debug.WriteLine($"IVR: {IVR.Value,5} (0x{IVR.Value:X4})");
+
+            Debug.WriteLine("\n--- Magistrale ---");
+            Debug.WriteLine($"SBUS: {SBUS.Value,5} (0x{SBUS.Value:X4})");
+            Debug.WriteLine($"DBUS: {DBUS.Value,5} (0x{DBUS.Value:X4})");
+            Debug.WriteLine($"RBUS: {RBUS.Value,5} (0x{RBUS.Value:X4})");
+
+            Debug.WriteLine("\n--- Flag-uri (Condiții) ---");
+            Debug.WriteLine($"Z (Zero)     : {Flags.Z}");
+            Debug.WriteLine($"N (Negativ)  : {Flags.N}");
+            Debug.WriteLine($"C (Carry)    : {Flags.C}");
+            Debug.WriteLine($"V (Overflow) : {Flags.V}");
+
+            Debug.WriteLine("============================================\n");
         }
     }
 }
