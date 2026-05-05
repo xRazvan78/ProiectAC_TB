@@ -13,9 +13,48 @@ namespace ProiectAC
 {
     public partial class Form1 : Form
     {
+
+        private Models.Cpu myCpu;
+
         public Form1()
         {
             InitializeComponent();
+
+            myCpu = new Models.Cpu();
+
+        }
+
+        private void UpdateUI()
+        {
+            txtR0.Text = "0x" + myCpu.R[0].Value.ToString("X4");
+            txtR1.Text = "0x" + myCpu.R[1].Value.ToString("X4");
+            txtR2.Text = "0x" + myCpu.R[2].Value.ToString("X4");
+            txtR3.Text = "0x" + myCpu.R[3].Value.ToString("X4");
+            txtR4.Text = "0x" + myCpu.R[4].Value.ToString("X4");
+            txtR5.Text = "0x" + myCpu.R[5].Value.ToString("X4");
+            txtR6.Text = "0x" + myCpu.R[6].Value.ToString("X4");
+            txtR7.Text = "0x" + myCpu.R[7].Value.ToString("X4");
+            txtR8.Text = "0x" + myCpu.R[8].Value.ToString("X4");
+            txtR9.Text = "0x" + myCpu.R[9].Value.ToString("X4");
+            txtR10.Text = "0x" + myCpu.R[10].Value.ToString("X4");
+            txtR11.Text = "0x" + myCpu.R[11].Value.ToString("X4");
+            txtR12.Text = "0x" + myCpu.R[12].Value.ToString("X4");
+            txtR13.Text = "0x" + myCpu.R[13].Value.ToString("X4");
+            txtR14.Text = "0x" + myCpu.R[14].Value.ToString("X4");
+            txtR15.Text = "0x" + myCpu.R[15].Value.ToString("X4");
+
+            txtPC.Text = "0x" + myCpu.PC.Value.ToString("X4");
+            txtSP.Text = "0x" + myCpu.SP.Value.ToString("X4");
+            txtADR.Text = "0x" + myCpu.ADR.Value.ToString("X4");
+            txtMDR.Text = "0x" + myCpu.MDR.Value.ToString("X4");
+            txtIR.Text = "0x" + myCpu.IR.Value.ToString("X4");
+            txtIVR.Text = "0x" + myCpu.IVR.Value.ToString("X4");
+            txtT.Text = "0x" + myCpu.T.Value.ToString("X4");
+
+            txtZ.BackColor = myCpu.Flags.Z ? Color.Red : Color.White;
+            txtN.BackColor = myCpu.Flags.N ? Color.Red : Color.White;
+            txtC.BackColor = myCpu.Flags.C ? Color.Red : Color.White;
+            txtV.BackColor = myCpu.Flags.V ? Color.Red : Color.White;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -24,26 +63,85 @@ namespace ProiectAC
         }
 
         private void button1_Click(object sender, EventArgs e)
-        {
-            // Apelează parser-ul scris de tine
+        {// 1. Citim fișierul
             var microprogram = ProiectAC.Utilities.CsvParser.Load("microprogram.csv");
 
             if (microprogram.Count > 0)
             {
-                // Luăm prima instrucțiune ca să verificăm că a citit corect datele
-                var prima = microprogram[0];
+                // 2. Căutăm automat linia unde începe codul real (prima etichetă IFCH)
+                int startIndex = microprogram.FindIndex(m => m.Label == "IFCH");
+                if (startIndex == -1) startIndex = 0; // Dacă nu o găsește, pleacă de la 0
 
-                MessageBox.Show($"SUCCES! Am încărcat {microprogram.Count} instrucțiuni.\n\n" +
-                                $"Test prima instrucțiune:\n" +
-                                $"- Etichetă: {prima.Label}\n" +
-                                $"- Adresă: {prima.Address}\n" +
-                                $"- Operație ALU: {prima.AluOp}\n" +
-                                $"- Adresă de Salt: {prima.JumpAddressText}",
-                                "Test Reușit");
+                // 3. Copiem doar instrucțiunile valide (fără header)
+                int adresaCurenta = 0;
+                for (int i = startIndex; i < microprogram.Count; i++)
+                {
+                    myCpu.MPM[adresaCurenta] = microprogram[i];
+                    adresaCurenta++;
+                }
+
+                // 4. HACK DE TESTARE: Punem manual date în Memoria RAM!
+                // Altfel, procesorul ar citi doar 0-uri și s-ar bloca.
+                myCpu.Ram.Write(0, 0x1234); // La adresa 0, punem instrucțiunea 0x1234
+                myCpu.Ram.Write(1, 0xABCD); // La adresa 1, punem altceva
+
+                // Setăm și un registru general manual ca să-l vedem pe ecran
+                myCpu.R[5].Value = 0x00FF;
+
+                MessageBox.Show($"SUCCES!\nAm ignorat capul de tabel și am încărcat {adresaCurenta} microinstrucțiuni valide.\nAm injectat și un program de test în RAM!", "Sistem Pregătit");
             }
             else
             {
                 MessageBox.Show("Nu s-a încărcat nimic. Ceva nu e în regulă cu fișierul CSV.", "Eroare");
+            }
+
+            // Resetăm procesorul la adresa 0 și actualizăm ecranul
+            myCpu.CurrentMicroAddress = 0;
+            myCpu.PC.Value = 0;
+            UpdateUI();
+        }
+
+        private void label19_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lblADR_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnSTEP_Click(object sender, EventArgs e)
+        {
+            // 1. Spunem procesorului să execute o instrucțiune
+            myCpu.ExecuteClockCycle();
+
+            // 2. Cerem interfeței să se actualizeze ca să vedem ce s-a schimbat!
+            UpdateUI();
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            myCpu.ExecuteClockCycle();
+            UpdateUI();
+        }
+
+        private void btnRUN_Click(object sender, EventArgs e)
+        {
+            if (timer1.Enabled == false)
+            {
+                // Dacă e oprit, îl pornim
+                timer1.Start();
+                // (Opțional) Schimbăm textul butonului ca să știm că rulează
+                ((Button)sender).Text = "STOP";
+                ((Button)sender).BackColor = Color.Orange;
+            }
+            else
+            {
+                // Dacă merge deja, îl oprim
+                timer1.Stop();
+                ((Button)sender).Text = "RUN";
+                ((Button)sender).BackColor = Color.White; // sau culoarea ta inițială
             }
         }
     }
