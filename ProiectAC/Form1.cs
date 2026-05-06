@@ -1,4 +1,5 @@
-﻿using ProiectAC.Models;
+using ProiectAC.Compiler;
+using ProiectAC.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,15 +14,12 @@ namespace ProiectAC
 {
     public partial class Form1 : Form
     {
-
         private Models.Cpu myCpu;
 
         public Form1()
         {
             InitializeComponent();
-
             myCpu = new Models.Cpu();
-
         }
 
         private void UpdateUI()
@@ -59,20 +57,19 @@ namespace ProiectAC
 
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            myCpu.Reset();
+            UpdateUI();
         }
 
         private void button1_Click(object sender, EventArgs e)
-        {// 1. Citim fișierul
+        {
             var microprogram = ProiectAC.Utilities.CsvParser.Load("microprogram.csv");
 
             if (microprogram.Count > 0)
             {
-                // 2. Căutăm automat linia unde începe codul real (prima etichetă IFCH)
                 int startIndex = microprogram.FindIndex(m => m.Label == "IFCH");
-                if (startIndex == -1) startIndex = 0; // Dacă nu o găsește, pleacă de la 0
+                if (startIndex == -1) startIndex = 0;
 
-                // 3. Copiem doar instrucțiunile valide (fără header)
                 int adresaCurenta = 0;
                 for (int i = startIndex; i < microprogram.Count; i++)
                 {
@@ -80,22 +77,16 @@ namespace ProiectAC
                     adresaCurenta++;
                 }
 
-                // 4. HACK DE TESTARE: Punem manual date în Memoria RAM!
-                // Altfel, procesorul ar citi doar 0-uri și s-ar bloca.
-                myCpu.Ram.Write(0, 0x1234); // La adresa 0, punem instrucțiunea 0x1234
-                myCpu.Ram.Write(1, 0xABCD); // La adresa 1, punem altceva
+                myCpu.Ram.Write(0, 0x1234);
+                myCpu.Ram.Write(1, 0xABCD);
 
-                // Setăm și un registru general manual ca să-l vedem pe ecran
                 myCpu.R[5].Value = 0x00FF;
-
-                MessageBox.Show($"SUCCES!\nAm ignorat capul de tabel și am încărcat {adresaCurenta} microinstrucțiuni valide.\nAm injectat și un program de test în RAM!", "Sistem Pregătit");
             }
             else
             {
-                MessageBox.Show("Nu s-a încărcat nimic. Ceva nu e în regulă cu fișierul CSV.", "Eroare");
+                MessageBox.Show("Error");
             }
 
-            // Resetăm procesorul la adresa 0 și actualizăm ecranul
             myCpu.CurrentMicroAddress = 0;
             myCpu.PC.Value = 0;
             UpdateUI();
@@ -103,20 +94,15 @@ namespace ProiectAC
 
         private void label19_Click(object sender, EventArgs e)
         {
-
         }
 
         private void lblADR_Click(object sender, EventArgs e)
         {
-
         }
 
         private void btnSTEP_Click(object sender, EventArgs e)
         {
-            // 1. Spunem procesorului să execute o instrucțiune
             myCpu.ExecuteClockCycle();
-
-            // 2. Cerem interfeței să se actualizeze ca să vedem ce s-a schimbat!
             UpdateUI();
         }
 
@@ -130,18 +116,15 @@ namespace ProiectAC
         {
             if (timer1.Enabled == false)
             {
-                // Dacă e oprit, îl pornim
                 timer1.Start();
-                // (Opțional) Schimbăm textul butonului ca să știm că rulează
                 ((Button)sender).Text = "STOP";
                 ((Button)sender).BackColor = Color.Orange;
             }
             else
             {
-                // Dacă merge deja, îl oprim
                 timer1.Stop();
                 ((Button)sender).Text = "RUN";
-                ((Button)sender).BackColor = Color.White; // sau culoarea ta inițială
+                ((Button)sender).BackColor = Color.White; 
             }
         }
     }
