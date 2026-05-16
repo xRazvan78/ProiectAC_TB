@@ -31,8 +31,11 @@
             this.components = new System.ComponentModel.Container();
             this.btnTest = new System.Windows.Forms.Button();
             this.panelSBUS = new System.Windows.Forms.Panel();
+            this.valSBUS = new System.Windows.Forms.Label();
             this.panelDBUS = new System.Windows.Forms.Panel();
+            this.valDBUS = new System.Windows.Forms.Label();
             this.panelRBUS = new System.Windows.Forms.Panel();
+            this.valRBUS = new System.Windows.Forms.Label();
             this.lblSBUS = new System.Windows.Forms.Label();
             this.lblDBUS = new System.Windows.Forms.Label();
             this.lblRBUS = new System.Windows.Forms.Label();
@@ -83,6 +86,7 @@
             this.lblIVR = new System.Windows.Forms.Label();
             this.lblT = new System.Windows.Forms.Label();
             this.panelALU = new System.Windows.Forms.Panel();
+            this.valALU = new System.Windows.Forms.Label();
             this.lblALU = new System.Windows.Forms.Label();
             this.txtZ = new System.Windows.Forms.TextBox();
             this.txtN = new System.Windows.Forms.TextBox();
@@ -95,46 +99,82 @@
             this.btnSTEP = new System.Windows.Forms.Button();
             this.btnRUN = new System.Windows.Forms.Button();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.listBoxMicroprogram = new System.Windows.Forms.ListBox();
+            this.listBoxProgram = new System.Windows.Forms.ListBox();
+            this.panelSBUS.SuspendLayout();
+            this.panelDBUS.SuspendLayout();
+            this.panelRBUS.SuspendLayout();
+            this.panelALU.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnTest
             // 
-            this.btnTest.Location = new System.Drawing.Point(1045, 528);
+            this.btnTest.Location = new System.Drawing.Point(1059, 504);
             this.btnTest.Name = "btnTest";
-            this.btnTest.Size = new System.Drawing.Size(75, 23);
+            this.btnTest.Size = new System.Drawing.Size(88, 39);
             this.btnTest.TabIndex = 0;
-            this.btnTest.Text = "Test";
+            this.btnTest.Text = "Load";
             this.btnTest.UseVisualStyleBackColor = true;
             this.btnTest.Click += new System.EventHandler(this.button1_Click);
             // 
             // panelSBUS
             // 
             this.panelSBUS.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.panelSBUS.Location = new System.Drawing.Point(12, 95);
+            this.panelSBUS.Controls.Add(this.valSBUS);
+            this.panelSBUS.Location = new System.Drawing.Point(28, 102);
             this.panelSBUS.Name = "panelSBUS";
-            this.panelSBUS.Size = new System.Drawing.Size(70, 363);
+            this.panelSBUS.Size = new System.Drawing.Size(56, 64);
             this.panelSBUS.TabIndex = 1;
+            // 
+            // valSBUS
+            // 
+            this.valSBUS.AutoSize = true;
+            this.valSBUS.Location = new System.Drawing.Point(3, 28);
+            this.valSBUS.Name = "valSBUS";
+            this.valSBUS.Size = new System.Drawing.Size(44, 16);
+            this.valSBUS.TabIndex = 0;
+            this.valSBUS.Text = "label1";
             // 
             // panelDBUS
             // 
             this.panelDBUS.BackColor = System.Drawing.SystemColors.Info;
-            this.panelDBUS.Location = new System.Drawing.Point(121, 95);
+            this.panelDBUS.Controls.Add(this.valDBUS);
+            this.panelDBUS.Location = new System.Drawing.Point(134, 102);
             this.panelDBUS.Name = "panelDBUS";
-            this.panelDBUS.Size = new System.Drawing.Size(60, 359);
+            this.panelDBUS.Size = new System.Drawing.Size(55, 64);
             this.panelDBUS.TabIndex = 2;
+            // 
+            // valDBUS
+            // 
+            this.valDBUS.AutoSize = true;
+            this.valDBUS.Location = new System.Drawing.Point(3, 28);
+            this.valDBUS.Name = "valDBUS";
+            this.valDBUS.Size = new System.Drawing.Size(44, 16);
+            this.valDBUS.TabIndex = 0;
+            this.valDBUS.Text = "label2";
             // 
             // panelRBUS
             // 
             this.panelRBUS.BackColor = System.Drawing.SystemColors.WindowFrame;
-            this.panelRBUS.Location = new System.Drawing.Point(226, 96);
+            this.panelRBUS.Controls.Add(this.valRBUS);
+            this.panelRBUS.Location = new System.Drawing.Point(239, 102);
             this.panelRBUS.Name = "panelRBUS";
-            this.panelRBUS.Size = new System.Drawing.Size(61, 362);
+            this.panelRBUS.Size = new System.Drawing.Size(57, 64);
             this.panelRBUS.TabIndex = 3;
+            // 
+            // valRBUS
+            // 
+            this.valRBUS.AutoSize = true;
+            this.valRBUS.Location = new System.Drawing.Point(3, 28);
+            this.valRBUS.Name = "valRBUS";
+            this.valRBUS.Size = new System.Drawing.Size(44, 16);
+            this.valRBUS.TabIndex = 0;
+            this.valRBUS.Text = "label3";
             // 
             // lblSBUS
             // 
             this.lblSBUS.AutoSize = true;
-            this.lblSBUS.Location = new System.Drawing.Point(12, 68);
+            this.lblSBUS.Location = new System.Drawing.Point(25, 68);
             this.lblSBUS.Name = "lblSBUS";
             this.lblSBUS.Size = new System.Drawing.Size(44, 16);
             this.lblSBUS.TabIndex = 4;
@@ -143,7 +183,7 @@
             // lblDBUS
             // 
             this.lblDBUS.AutoSize = true;
-            this.lblDBUS.Location = new System.Drawing.Point(118, 68);
+            this.lblDBUS.Location = new System.Drawing.Point(131, 68);
             this.lblDBUS.Name = "lblDBUS";
             this.lblDBUS.Size = new System.Drawing.Size(45, 16);
             this.lblDBUS.TabIndex = 5;
@@ -152,7 +192,7 @@
             // lblRBUS
             // 
             this.lblRBUS.AutoSize = true;
-            this.lblRBUS.Location = new System.Drawing.Point(223, 68);
+            this.lblRBUS.Location = new System.Drawing.Point(236, 68);
             this.lblRBUS.Name = "lblRBUS";
             this.lblRBUS.Size = new System.Drawing.Size(45, 16);
             this.lblRBUS.TabIndex = 6;
@@ -599,15 +639,26 @@
             // 
             // panelALU
             // 
-            this.panelALU.Location = new System.Drawing.Point(342, 68);
+            this.panelALU.BackColor = System.Drawing.Color.ForestGreen;
+            this.panelALU.Controls.Add(this.valALU);
+            this.panelALU.Location = new System.Drawing.Point(410, 94);
             this.panelALU.Name = "panelALU";
-            this.panelALU.Size = new System.Drawing.Size(272, 128);
+            this.panelALU.Size = new System.Drawing.Size(165, 72);
             this.panelALU.TabIndex = 53;
+            // 
+            // valALU
+            // 
+            this.valALU.AutoSize = true;
+            this.valALU.Location = new System.Drawing.Point(62, 31);
+            this.valALU.Name = "valALU";
+            this.valALU.Size = new System.Drawing.Size(44, 16);
+            this.valALU.TabIndex = 0;
+            this.valALU.Text = "label4";
             // 
             // lblALU
             // 
             this.lblALU.AutoSize = true;
-            this.lblALU.Location = new System.Drawing.Point(458, 40);
+            this.lblALU.Location = new System.Drawing.Point(483, 68);
             this.lblALU.Name = "lblALU";
             this.lblALU.Size = new System.Drawing.Size(33, 16);
             this.lblALU.TabIndex = 54;
@@ -615,28 +666,28 @@
             // 
             // txtZ
             // 
-            this.txtZ.Location = new System.Drawing.Point(342, 242);
+            this.txtZ.Location = new System.Drawing.Point(970, 277);
             this.txtZ.Name = "txtZ";
             this.txtZ.Size = new System.Drawing.Size(100, 22);
             this.txtZ.TabIndex = 55;
             // 
             // txtN
             // 
-            this.txtN.Location = new System.Drawing.Point(342, 320);
+            this.txtN.Location = new System.Drawing.Point(970, 339);
             this.txtN.Name = "txtN";
             this.txtN.Size = new System.Drawing.Size(100, 22);
             this.txtN.TabIndex = 56;
             // 
             // txtC
             // 
-            this.txtC.Location = new System.Drawing.Point(514, 242);
+            this.txtC.Location = new System.Drawing.Point(971, 308);
             this.txtC.Name = "txtC";
             this.txtC.Size = new System.Drawing.Size(100, 22);
             this.txtC.TabIndex = 57;
             // 
             // txtV
             // 
-            this.txtV.Location = new System.Drawing.Point(514, 320);
+            this.txtV.Location = new System.Drawing.Point(972, 367);
             this.txtV.Name = "txtV";
             this.txtV.Size = new System.Drawing.Size(100, 22);
             this.txtV.TabIndex = 58;
@@ -644,7 +695,7 @@
             // lblZ
             // 
             this.lblZ.AutoSize = true;
-            this.lblZ.Location = new System.Drawing.Point(339, 223);
+            this.lblZ.Location = new System.Drawing.Point(949, 280);
             this.lblZ.Name = "lblZ";
             this.lblZ.Size = new System.Drawing.Size(15, 16);
             this.lblZ.TabIndex = 59;
@@ -653,7 +704,7 @@
             // lblN
             // 
             this.lblN.AutoSize = true;
-            this.lblN.Location = new System.Drawing.Point(342, 298);
+            this.lblN.Location = new System.Drawing.Point(949, 339);
             this.lblN.Name = "lblN";
             this.lblN.Size = new System.Drawing.Size(17, 16);
             this.lblN.TabIndex = 60;
@@ -662,7 +713,7 @@
             // lblC
             // 
             this.lblC.AutoSize = true;
-            this.lblC.Location = new System.Drawing.Point(514, 223);
+            this.lblC.Location = new System.Drawing.Point(949, 311);
             this.lblC.Name = "lblC";
             this.lblC.Size = new System.Drawing.Size(16, 16);
             this.lblC.TabIndex = 61;
@@ -671,7 +722,7 @@
             // lblV
             // 
             this.lblV.AutoSize = true;
-            this.lblV.Location = new System.Drawing.Point(514, 298);
+            this.lblV.Location = new System.Drawing.Point(950, 367);
             this.lblV.Name = "lblV";
             this.lblV.Size = new System.Drawing.Size(16, 16);
             this.lblV.TabIndex = 62;
@@ -702,11 +753,31 @@
             this.timer1.Interval = 500;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
+            // listBoxMicroprogram
+            // 
+            this.listBoxMicroprogram.FormattingEnabled = true;
+            this.listBoxMicroprogram.ItemHeight = 16;
+            this.listBoxMicroprogram.Location = new System.Drawing.Point(15, 208);
+            this.listBoxMicroprogram.Name = "listBoxMicroprogram";
+            this.listBoxMicroprogram.Size = new System.Drawing.Size(281, 212);
+            this.listBoxMicroprogram.TabIndex = 65;
+            // 
+            // listBoxProgram
+            // 
+            this.listBoxProgram.FormattingEnabled = true;
+            this.listBoxProgram.ItemHeight = 16;
+            this.listBoxProgram.Location = new System.Drawing.Point(410, 208);
+            this.listBoxProgram.Name = "listBoxProgram";
+            this.listBoxProgram.Size = new System.Drawing.Size(239, 212);
+            this.listBoxProgram.TabIndex = 66;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1172, 563);
+            this.Controls.Add(this.listBoxProgram);
+            this.Controls.Add(this.listBoxMicroprogram);
             this.Controls.Add(this.btnRUN);
             this.Controls.Add(this.btnSTEP);
             this.Controls.Add(this.lblV);
@@ -775,6 +846,14 @@
             this.Name = "Form1";
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.Form1_Load);
+            this.panelSBUS.ResumeLayout(false);
+            this.panelSBUS.PerformLayout();
+            this.panelDBUS.ResumeLayout(false);
+            this.panelDBUS.PerformLayout();
+            this.panelRBUS.ResumeLayout(false);
+            this.panelRBUS.PerformLayout();
+            this.panelALU.ResumeLayout(false);
+            this.panelALU.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -848,6 +927,12 @@
         private System.Windows.Forms.Button btnSTEP;
         private System.Windows.Forms.Button btnRUN;
         private System.Windows.Forms.Timer timer1;
+        private System.Windows.Forms.ListBox listBoxMicroprogram;
+        private System.Windows.Forms.Label valSBUS;
+        private System.Windows.Forms.Label valDBUS;
+        private System.Windows.Forms.Label valRBUS;
+        private System.Windows.Forms.Label valALU;
+        private System.Windows.Forms.ListBox listBoxProgram;
     }
 }
 

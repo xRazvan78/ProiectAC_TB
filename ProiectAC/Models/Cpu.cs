@@ -115,16 +115,70 @@ namespace ProiectAC.Models
 
         public void ExecuteClockCycle()
         {
+            if (MPM[CurrentMicroAddress] == null) return;
+
             Microinstruction mir = MPM[CurrentMicroAddress];
 
+            // =================================================================
+            // INTERCEPTORUL MAGIC: Corectat pentru convenția Intel (Dest, Sursa)
+            // =================================================================
+            if (CurrentMicroAddress >= 30 && CurrentMicroAddress <= 80)
+            {
+                int mainOpcode = (IR.Value >> 12) & 0x000F;
+
+                if (mainOpcode < 0x7) // Operații cu 2 operanzi (ADD, MOV, SUB etc.)
+                {
+                    // --- INVERSAREA EFECTIVĂ AICI ---
+                    // Primul registru din text devine acum DESTINAȚIE (pe SBUS și ca țintă de salvare)
+                    // Al doilea registru din text devine SURSĂ (pe DBUS)
+                    mir.SbusSource = "PDRGS"; // SBUS va aduce acum valoarea primului registru scris
+                    mir.DbusSource = "PDRGD"; // DBUS va aduce valoarea celui de-al doilea registru
+                    mir.RbusDest = (mainOpcode == 0x3) ? "NONE" : "PMRGS"; // Salvăm în PMRGS (primul registru)!
+
+                    switch (mainOpcode)
+                    {
+                        case 0x0: mir.AluOp = "DBUS"; break; // MOV: Copiem DBUS (Sursa) în SBUS (Dest)
+                        case 0x1: mir.AluOp = "SUM"; break;  // ADD: Rezultatul va merge în primul registru
+                        case 0x2: mir.AluOp = "SUB"; break;  // SUB: Primul - Al doilea
+                        case 0x3: mir.AluOp = "CMP"; break;  // CMP: Doar flag-uri
+                        case 0x4: mir.AluOp = "AND"; break;
+                        case 0x5: mir.AluOp = "OR"; break;
+                        case 0x6: mir.AluOp = "XOR"; break;
+                    }
+                }
+                else if (mainOpcode == 0x8) // Operații cu 1 operand (INC, DEC, CLR etc.)
+                {
+                    // La un singur operand nu avem ce inversa (e doar un registru), deci rămâne la fel:
+                    mir.SbusSource = "PDRGD";
+                    mir.DbusSource = "PD0D";
+                    mir.RbusDest = "PMRGD";
+
+                    int subOpcodeB = (IR.Value >> 6) & 0x000F;
+                    switch (subOpcodeB)
+                    {
+                        case 0x0: mir.AluOp = "CLR"; break;
+                        case 0x1: mir.AluOp = "NEG"; break;
+                        case 0x2: mir.AluOp = "INC"; break;
+                        case 0x3: mir.AluOp = "DEC"; break;
+                        case 0x4: mir.AluOp = "ASL"; break;
+                        case 0x5: mir.AluOp = "ASR"; break;
+                        case 0x6: mir.AluOp = "LSR"; break;
+                        case 0x7: mir.AluOp = "ROL"; break;
+                        case 0x8: mir.AluOp = "ROR"; break;
+                    }
+                }
+            }
+            // =================================================================
+
+            // De aici încolo codul curge exact ca înainte:
             SBUS.Value = GetRegisterValueByCode(mir.SbusSource);
             DBUS.Value = GetRegisterValueByCode(mir.DbusSource);
 
             RBUS.Value = Alu.Execute(mir.AluOp, SBUS.Value, DBUS.Value, Flags);
 
             SetRegisterValueByCode(mir.RbusDest, RBUS.Value);
-            HandleMemoryOperation(mir.MemOp);
 
+            HandleMemoryOperation(mir.MemOp);
             HandleOtherOperations(mir.OtherOps);
 
             CurrentMicroAddress = Seq.GetNextAddress(mir, Flags, IR.Value);
@@ -132,89 +186,78 @@ namespace ProiectAC.Models
 
         private ushort GetRegisterValueByCode(string code)
         {
-            if (string.IsNullOrEmpty(code) || code.Contains("NONE") || code == "0000") return 0;
+            if (string.IsNullOrWhiteSpace(code) || code.Contains("NONE") || code.Contains("0000")) return 0;
 
-            string cleanCode = code.Split(':')[0].Trim().ToUpper();
+            // Ștergem absolut toate spațiile și facem litere mari pentru a preveni erorile din CSV
+            string c = code.Split(':')[0].Replace(" ", "").ToUpper();
 
-            switch (cleanCode)
+            if (c.Contains("PDPC")) return PC.Value;
+            if (c.Contains("PDSP")) return SP.Value;
+            if (c.Contains("PDMDR") && !c.Contains("NEG")) return MDR.Value;
+            if (c.Contains("PDIVR")) return IVR.Value;
+            if (c.Contains("PDT") && !c.Contains("NEG")) return T.Value;
+            if (c.Contains("PDADR")) return ADR.Value;
+            if (c.Contains("PDIR") && !c.Contains("[")) return IR.Value;
+
+            // Aici prindem PDRG, PDRGD, PDRGS, indiferent cum sunt scrise
+            if (c.Contains("PDRG"))
             {
-                case "PDPC":
-                case "PDPCS":
-                case "PDPCD": return PC.Value;
-
-                case "PDSP":
-                case "PDSPS": return SP.Value;
-
-                case "PDMDR":
-                case "PDMDRS":
-                case "PDMDRD": return MDR.Value;
-
-                case "PDIVR":
-                case "PDIVRS": return IVR.Value;
-
-                case "PDT":
-                case "PDTS": return T.Value;
-
-                case "PDADRS": return ADR.Value;
-
-                case "PDIR": return IR.Value;
-
-                case "PDRGS":
-                    return R[GetSourceRegisterIndexFromIR()].Value;
-                case "PDRGD":
-                    return R[GetDestinationRegisterIndexFromIR()].Value;
-
-                case "PDFLAGS":
-                    ushort flagsValue = 0;
-                    if (Flags.Z) flagsValue |= 0x0001;
-                    if (Flags.N) flagsValue |= 0x0002;
-                    if (Flags.C) flagsValue |= 0x0004;
-                    if (Flags.V) flagsValue |= 0x0008;
-                    return flagsValue;
-
-                case "PD0S":
-                case "PD0D": return 0;
-                case "PD-1S": return 0xFFFF;
-
-                case "PDTSNEG": return (ushort)~T.Value;
-                case "PDMDRDNEG": return (ushort)~MDR.Value;
-
-                case "PDIR [7…0]D":
-                    return (ushort)(IR.Value & 0x00FF);
-
-                case "DBUS":
-                    return DBUS.Value;
-
-                default: return 0;
+                int regIndex = c.Contains("S") ? GetSourceRegisterIndexFromIR() : GetDestinationRegisterIndexFromIR();
+                return R[regIndex].Value;
             }
+
+            if (c.Contains("PDFLAG"))
+            {
+                ushort flagsValue = 0;
+                if (Flags.Z) flagsValue |= 0x0001;
+                if (Flags.N) flagsValue |= 0x0002;
+                if (Flags.C) flagsValue |= 0x0004;
+                if (Flags.V) flagsValue |= 0x0008;
+                return flagsValue;
+            }
+
+            if (c == "PD0S" || c == "PD0D") return 0;
+            if (c == "PD-1S") return 0xFFFF;
+            if (c.Contains("PDTSNEG")) return (ushort)~T.Value;
+            if (c.Contains("PDMDRDNEG")) return (ushort)~MDR.Value;
+            if (c.Contains("PDIR[7…0]D")) return (ushort)(IR.Value & 0x00FF);
+            if (c.Contains("DBUS")) return DBUS.Value;
+
+            return 0;
         }
 
         private void SetRegisterValueByCode(string code, ushort value)
         {
-            if (string.IsNullOrEmpty(code) || code.Contains("NONE") || code == "00") return;
+            if (string.IsNullOrWhiteSpace(code) || code.Contains("NONE") || code.Contains("00")) return;
 
-            string cleanCode = code.Split(':')[0].Trim().ToUpper();
+            // Ștergem absolut toate spațiile și facem litere mari
+            string c = code.Split(':')[0].Replace(" ", "").ToUpper();
 
-            switch (cleanCode)
+            if (c.Contains("PMADR")) { ADR.Value = value; return; }
+            if (c.Contains("PMMDR")) { MDR.Value = value; return; }
+            if (c.Contains("PMPC")) { PC.Value = value; return; }
+            if (c.Contains("PMSP")) { SP.Value = value; return; }
+            if (c.Contains("PMIR")) { IR.Value = value; return; }
+            if (c.Contains("PMT")) { T.Value = value; return; }
+
+            // Aici prindem PMRG, PMRGD, PMRGS
+            if (c.Contains("PMRG"))
             {
-                case "PMADR": ADR.Value = value; break;
-                case "PMMDR": MDR.Value = value; break;
-                case "PMPC": PC.Value = value; break;
-                case "PMSP": SP.Value = value; break;
-                case "PMIR": IR.Value = value; break;
-                case "PMT": T.Value = value; break;
-
-                case "PMRG":
-                    int regIndex = GetDestinationRegisterIndexFromIR();
+                int regIndex = c.Contains("S") ? GetSourceRegisterIndexFromIR() : GetDestinationRegisterIndexFromIR();
+                if (regIndex >= 0 && regIndex < 16)
+                {
                     R[regIndex].Value = value;
-                    break;
+                }
+                return;
+            }
 
-                case "PMFLAG":
-                    Flags.Z = (value & 0x0001) != 0;
-                    Flags.N = (value & 0x0002) != 0;
-                    Flags.C = (value & 0x0004) != 0;
-                    Flags.V = (value & 0x0008) != 0;
-                    break;
+            if (c.Contains("PMFLAG"))
+            {
+                Flags.Z = (value & 0x0001) != 0;
+                Flags.N = (value & 0x0002) != 0;
+                Flags.C = (value & 0x0004) != 0;
+                Flags.V = (value & 0x0008) != 0;
+                return;
             }
         }
 
@@ -235,7 +278,7 @@ namespace ProiectAC.Models
                     break;
 
                 case "IFCH":
-                    IR.Value = Ram.Read(PC.Value);
+                    IR.Value = Ram.Read(ADR.Value);
                     break;
             }
         }
@@ -259,8 +302,8 @@ namespace ProiectAC.Models
             return (IR.Value >> 6) & 0x000F;
         }
 
-        private int GetDestinationRegisterIndexFromIR() 
-        { 
+        private int GetDestinationRegisterIndexFromIR()
+        {
             return IR.Value & 0x000F;
         }
 
@@ -271,7 +314,6 @@ namespace ProiectAC.Models
             Debug.WriteLine("--- Registre Generale ---");
             for (int i = 0; i < 16; i++)
             {
-                // Afișăm în format Zecimal, dar și Hexazecimal (X4 înseamnă 4 caractere hex, ex: 00FF)
                 Debug.WriteLine($"R{i,-2}: {R[i].Value,5} (0x{R[i].Value:X4})");
             }
 

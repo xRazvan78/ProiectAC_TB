@@ -41,13 +41,11 @@ namespace ProiectAC.Compiler
 
             string mnemonic = parts[0];
 
-            // Verificăm Clasa A (2 operanzi, ex: ADD R1 R2)
             if (_classAOpcodes.ContainsKey(mnemonic) && parts.Length >= 3)
             {
                 return AssembleClassA(mnemonic, parts[1], parts[2]);
             }
 
-            // Verificăm Clasa B (1 operand, ex: INC R5)
             if (_classBOpcodes.ContainsKey(mnemonic) && parts.Length >= 2)
             {
                 return AssembleClassB(mnemonic, parts[1]);
