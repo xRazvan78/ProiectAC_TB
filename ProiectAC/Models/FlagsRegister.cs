@@ -8,10 +8,10 @@ namespace ProiectAC.Models
 {
     public class FlagsRegister
     {
-        public bool Z { get; set; } // Zero
-        public bool N { get; set; } // Negative
-        public bool C { get; set; } // Carry
-        public bool V { get; set; } // Overflow
+        public bool Z { get; set; } 
+        public bool N { get; set; }
+        public bool C { get; set; }
+        public bool V { get; set; }
 
         public void Reset()
         {

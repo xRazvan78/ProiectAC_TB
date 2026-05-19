@@ -1,4 +1,0 @@
-﻿MOV R2, R1
-INC R1
-ADD R1, R2
-HALT

@@ -24,7 +24,6 @@ namespace ProiectAC
 
         private void UpdateUI()
         {
-            // --- 1. Actualizare Registre Generale (R0 - R15) ---
             txtR0.Text = "0x" + myCpu.R[0].Value.ToString("X4");
             txtR1.Text = "0x" + myCpu.R[1].Value.ToString("X4");
             txtR2.Text = "0x" + myCpu.R[2].Value.ToString("X4");
@@ -42,7 +41,6 @@ namespace ProiectAC
             txtR14.Text = "0x" + myCpu.R[14].Value.ToString("X4");
             txtR15.Text = "0x" + myCpu.R[15].Value.ToString("X4");
 
-            // --- 2. Actualizare Registre Speciale ---
             txtPC.Text = "0x" + myCpu.PC.Value.ToString("X4");
             txtSP.Text = "0x" + myCpu.SP.Value.ToString("X4");
             txtADR.Text = "0x" + myCpu.ADR.Value.ToString("X4");
@@ -51,18 +49,15 @@ namespace ProiectAC
             txtIVR.Text = "0x" + myCpu.IVR.Value.ToString("X4");
             txtT.Text = "0x" + myCpu.T.Value.ToString("X4");
 
-            // --- 3. Actualizare Vizuală Flag-uri (Culori) ---
             txtZ.BackColor = myCpu.Flags.Z ? Color.Red : Color.White;
             txtN.BackColor = myCpu.Flags.N ? Color.Red : Color.White;
             txtC.BackColor = myCpu.Flags.C ? Color.Red : Color.White;
             txtV.BackColor = myCpu.Flags.V ? Color.Red : Color.White;
 
-            // --- 4. Actualizare Magistrale (Valori afișate ÎN INTERIORUL Panel-urilor) ---
             valSBUS.Text = "0x" + myCpu.SBUS.Value.ToString("X4");
             valDBUS.Text = "0x" + myCpu.DBUS.Value.ToString("X4");
             valRBUS.Text = "0x" + myCpu.RBUS.Value.ToString("X4");
 
-            // --- 5. Actualizare Text Operație ALU ---
             try
             {
                 if (myCpu.MPM[myCpu.CurrentMicroAddress] != null)
@@ -79,19 +74,15 @@ namespace ProiectAC
                 valALU.Text = "NONE";
             }
 
-            // --- 6. Sincronizare Selecție Vizuală în ListBox Microprogram ---
             if (listBoxMicroprogram.Items.Count > 0 && myCpu.CurrentMicroAddress < listBoxMicroprogram.Items.Count)
             {
                 listBoxMicroprogram.SelectedIndex = myCpu.CurrentMicroAddress;
             }
 
-            // --- 7. Sincronizare Selecție Vizuală în ListBox Program (program.txt) ---
             if (listBoxProgram.Items.Count > 0)
             {
                 int programIndex = myCpu.PC.Value / 2;
 
-                // Corecție grafică: După pasul inițial de IFCH, PC indică deja următoarea adresă.
-                // Menținem selecția pe instrucțiunea curentă în timpul micro-pașilor de execuție.
                 if (myCpu.CurrentMicroAddress != 0 && programIndex > 0)
                 {
                     programIndex -= 1;
@@ -107,10 +98,8 @@ namespace ProiectAC
                 }
             }
 
-            // --- 8. Detecție și Oprire Automată la Instrucțiunea HALT (Cod: 0xF003 la Starea: 96) ---
             if (myCpu.IR.Value == 0xF003 && myCpu.CurrentMicroAddress == 96)
             {
-                // Dezactivăm ceasul automat (Timer) dacă rulează programul nesupravegheat
                 if (timer1.Enabled)
                 {
                     timer1.Stop();
@@ -118,7 +107,6 @@ namespace ProiectAC
                     btnRUN.BackColor = Color.White;
                 }
 
-                // Blocăm interacțiunea cu butoanele ca să marcăm sfârșitul execuției
                 btnSTEP.Enabled = false;
                 btnRUN.Enabled = false;
 
@@ -138,17 +126,14 @@ namespace ProiectAC
 
             if (microprogram.Count > 0)
             {
-                // 1. Pregătim Tabelul Vizual pentru Microprogram (ListBox) și Memoria MPM
                 listBoxMicroprogram.Items.Clear();
 
-                // Creăm 512 poziții goale ca să respectăm adresele reale din arhitectură
                 for (int i = 0; i < myCpu.MPM.Length; i++)
                 {
                     myCpu.MPM[i] = null;
                     listBoxMicroprogram.Items.Add($"{i}: [Nefolosit]");
                 }
 
-                // Punem fiecare microinstrucțiune EXACT la adresa ei din CSV
                 foreach (var mir in microprogram)
                 {
                     if (mir.Address >= 0 && mir.Address < myCpu.MPM.Length)
@@ -158,7 +143,6 @@ namespace ProiectAC
                     }
                 }
 
-                // 2. Încărcăm și asamblăm fișierul text (program.txt)
                 myCpu.Ram.Clear();
                 Assembler asm = new Assembler();
 
@@ -169,7 +153,6 @@ namespace ProiectAC
 
                 if (System.IO.File.Exists(fisierProgram))
                 {
-                    // Curățăm ListBox-ul noului program din interfață
                     listBoxProgram.Items.Clear();
 
                     string[] instructiuni = System.IO.File.ReadAllLines(fisierProgram);
@@ -184,11 +167,10 @@ namespace ProiectAC
                             ushort machineCode = asm.AssembleLine(linie);
                             myCpu.Ram.Write(ramAddress, machineCode);
 
-                            // Adăugăm linia în noul ListBox împreună cu adresa ei în format Hexazecimal
                             listBoxProgram.Items.Add($"[{ramAddress:X4}] {linie.Trim()}");
 
-                            ramAddress += 2;      // Adresa RAM crește din 2 în 2 (16 biți)
-                            numarInstructiuni++;  // Numărăm instrucțiunile reale
+                            ramAddress += 2;      
+                            numarInstructiuni++;  
                         }
                         catch (Exception ex)
                         {
@@ -211,11 +193,9 @@ namespace ProiectAC
                 MessageBox.Show("Nu s-a încărcat nimic din CSV. Verificați calea fișierului.", "Eroare");
             }
 
-            // Resetăm pointerii de execuție la starea inițială (fără ștergerea memoriei RAM)
             myCpu.PC.Value = 0;
             myCpu.CurrentMicroAddress = 0;
 
-            // Reactivăm butoanele de control (în caz că fuseseră dezactivate de un HALT anterior)
             btnSTEP.Enabled = true;
             btnRUN.Enabled = true;
 

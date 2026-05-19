@@ -8,7 +8,6 @@ namespace ProiectAC.Models
 {
     public class Microinstruction
     {
-        // Câmpurile scrise de colegul tău (Studentul A)
         public int Address { get; set; }
         public string SbusSource { get; set; }
         public string DbusSource { get; set; }
@@ -20,7 +19,6 @@ namespace ProiectAC.Models
         public string IndexSelect { get; set; }
         public int JumpAddress { get; set; }
 
-        // Câmpurile adăugate pentru tine (Studentul B / Parser)
         public string Label { get; set; }
         public bool TrueFalse { get; set; }
         public string JumpAddressText { get; set; }

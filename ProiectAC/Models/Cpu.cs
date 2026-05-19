@@ -10,10 +10,8 @@ namespace ProiectAC.Models
 {
     public class Cpu
     {
-        // General Purpose Registers (R0 - R15)
         public Register[] R { get; private set; }
 
-        // Special Registers
         public Register PC { get; private set; }
         public Register SP { get; private set; }
         public Register ADR { get; private set; }
@@ -22,33 +20,27 @@ namespace ProiectAC.Models
         public Register IVR { get; private set; }
         public Register T { get; private set; }
 
-        // Flags Register
         public FlagsRegister Flags { get; private set; }
 
-        // Internal Buses
         public Bus SBUS { get; private set; }
         public Bus DBUS { get; private set; }
         public Bus RBUS { get; private set; }
 
-        // Functional Units
         public ALU Alu { get; private set; }
         public Memory Ram { get; private set; }
 
-        // Sequencer
         public MicroSequencer Seq { get; private set; }
-        public Microinstruction[] MPM { get; private set; } // Memory for Microprograms
+        public Microinstruction[] MPM { get; private set; } 
         public int CurrentMicroAddress { get; set; }
 
         public Cpu()
         {
-            // Initialize the 16 General Registers
             R = new Register[16];
             for (int i = 0; i < 16; i++)
             {
                 R[i] = new Register($"R{i}");
             }
 
-            // Initialize Special Registers
             PC = new Register("PC");
             SP = new Register("SP");
             ADR = new Register("ADR");
@@ -59,29 +51,25 @@ namespace ProiectAC.Models
 
             Flags = new FlagsRegister();
 
-            // Initialize Buses
             SBUS = new Bus("SBUS");
             DBUS = new Bus("DBUS");
             RBUS = new Bus("RBUS");
 
-            // Initialize Memory and ALU
             Alu = new ALU();
             Ram = new Memory();
 
             Seq = new MicroSequencer();
-            MPM = new Microinstruction[512]; // Adjust size based on your CSV rows
+            MPM = new Microinstruction[512];
             CurrentMicroAddress = 0;
         }
 
         public void Reset()
         {
-            // Clear all general registers
             for (int i = 0; i < 16; i++)
             {
                 R[i].Value = 0;
             }
 
-            // Clear special registers
             PC.Value = 0;
             SP.Value = 0;
             ADR.Value = 0;
@@ -90,12 +78,10 @@ namespace ProiectAC.Models
             IVR.Value = 0;
             T.Value = 0;
 
-            // Clear buses
             SBUS.Value = 0;
             DBUS.Value = 0;
             RBUS.Value = 0;
 
-            // Reset flags and memory
             Flags.Reset();
             Ram.Clear();
         }
@@ -119,36 +105,29 @@ namespace ProiectAC.Models
 
             Microinstruction mir = MPM[CurrentMicroAddress];
 
-            // =================================================================
-            // INTERCEPTORUL MAGIC: Corectat pentru convenția Intel (Dest, Sursa)
-            // =================================================================
             if (CurrentMicroAddress >= 30 && CurrentMicroAddress <= 80)
             {
                 int mainOpcode = (IR.Value >> 12) & 0x000F;
 
-                if (mainOpcode < 0x7) // Operații cu 2 operanzi (ADD, MOV, SUB etc.)
+                if (mainOpcode < 0x7) 
                 {
-                    // --- INVERSAREA EFECTIVĂ AICI ---
-                    // Primul registru din text devine acum DESTINAȚIE (pe SBUS și ca țintă de salvare)
-                    // Al doilea registru din text devine SURSĂ (pe DBUS)
-                    mir.SbusSource = "PDRGS"; // SBUS va aduce acum valoarea primului registru scris
-                    mir.DbusSource = "PDRGD"; // DBUS va aduce valoarea celui de-al doilea registru
-                    mir.RbusDest = (mainOpcode == 0x3) ? "NONE" : "PMRGS"; // Salvăm în PMRGS (primul registru)!
+                    mir.SbusSource = "PDRGS";
+                    mir.DbusSource = "PDRGD"; 
+                    mir.RbusDest = (mainOpcode == 0x3) ? "NONE" : "PMRGS";
 
                     switch (mainOpcode)
                     {
-                        case 0x0: mir.AluOp = "DBUS"; break; // MOV: Copiem DBUS (Sursa) în SBUS (Dest)
-                        case 0x1: mir.AluOp = "SUM"; break;  // ADD: Rezultatul va merge în primul registru
-                        case 0x2: mir.AluOp = "SUB"; break;  // SUB: Primul - Al doilea
-                        case 0x3: mir.AluOp = "CMP"; break;  // CMP: Doar flag-uri
+                        case 0x0: mir.AluOp = "DBUS"; break;
+                        case 0x1: mir.AluOp = "SUM"; break;  
+                        case 0x2: mir.AluOp = "SUB"; break;
+                        case 0x3: mir.AluOp = "CMP"; break;
                         case 0x4: mir.AluOp = "AND"; break;
                         case 0x5: mir.AluOp = "OR"; break;
                         case 0x6: mir.AluOp = "XOR"; break;
                     }
                 }
-                else if (mainOpcode == 0x8) // Operații cu 1 operand (INC, DEC, CLR etc.)
+                else if (mainOpcode == 0x8) 
                 {
-                    // La un singur operand nu avem ce inversa (e doar un registru), deci rămâne la fel:
                     mir.SbusSource = "PDRGD";
                     mir.DbusSource = "PD0D";
                     mir.RbusDest = "PMRGD";
@@ -168,9 +147,7 @@ namespace ProiectAC.Models
                     }
                 }
             }
-            // =================================================================
 
-            // De aici încolo codul curge exact ca înainte:
             SBUS.Value = GetRegisterValueByCode(mir.SbusSource);
             DBUS.Value = GetRegisterValueByCode(mir.DbusSource);
 
@@ -188,7 +165,6 @@ namespace ProiectAC.Models
         {
             if (string.IsNullOrWhiteSpace(code) || code.Contains("NONE") || code.Contains("0000")) return 0;
 
-            // Ștergem absolut toate spațiile și facem litere mari pentru a preveni erorile din CSV
             string c = code.Split(':')[0].Replace(" ", "").ToUpper();
 
             if (c.Contains("PDPC")) return PC.Value;
@@ -199,7 +175,6 @@ namespace ProiectAC.Models
             if (c.Contains("PDADR")) return ADR.Value;
             if (c.Contains("PDIR") && !c.Contains("[")) return IR.Value;
 
-            // Aici prindem PDRG, PDRGD, PDRGS, indiferent cum sunt scrise
             if (c.Contains("PDRG"))
             {
                 int regIndex = c.Contains("S") ? GetSourceRegisterIndexFromIR() : GetDestinationRegisterIndexFromIR();
@@ -230,7 +205,6 @@ namespace ProiectAC.Models
         {
             if (string.IsNullOrWhiteSpace(code) || code.Contains("NONE") || code.Contains("00")) return;
 
-            // Ștergem absolut toate spațiile și facem litere mari
             string c = code.Split(':')[0].Replace(" ", "").ToUpper();
 
             if (c.Contains("PMADR")) { ADR.Value = value; return; }
@@ -240,7 +214,6 @@ namespace ProiectAC.Models
             if (c.Contains("PMIR")) { IR.Value = value; return; }
             if (c.Contains("PMT")) { T.Value = value; return; }
 
-            // Aici prindem PMRG, PMRGD, PMRGS
             if (c.Contains("PMRG"))
             {
                 int regIndex = c.Contains("S") ? GetSourceRegisterIndexFromIR() : GetDestinationRegisterIndexFromIR();

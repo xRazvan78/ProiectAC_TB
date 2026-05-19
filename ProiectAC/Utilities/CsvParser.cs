@@ -34,7 +34,6 @@ namespace ProiectAC.Utilities
                         {
                             Microinstruction mi = new Microinstruction();
 
-                            // Folosim variabilele adăugate pentru tine
                             mi.Label = columns[0].Replace(":", "").Trim();
 
                             string hexAddress = columns[2].Replace("0x", "").Trim();
@@ -43,7 +42,6 @@ namespace ProiectAC.Utilities
                                 mi.Address = Convert.ToInt32(hexAddress, 16);
                             }
 
-                            // Folosim numele scurte preferate de colegul tău
                             mi.SbusSource = ExtractText(columns[4]);
                             mi.DbusSource = ExtractText(columns[5]);
                             mi.AluOp = ExtractText(columns[6]);
